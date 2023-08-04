@@ -63,6 +63,7 @@ struct _GstVaFilter
   guint32 scale_method;
   guint32 interpolation_method;
   guint32 background_color;
+  guint32 pipeline_flags;
 
   gboolean crop_enabled;
 
@@ -972,7 +973,13 @@ gst_va_filter_set_scale_method (GstVaFilter * self, guint32 method)
   g_return_val_if_fail (GST_IS_VA_FILTER (self), FALSE);
 
   GST_OBJECT_LOCK (self);
+  guint32 pipeline_flags = 0;
+  if (method == VA_FILTER_SCALING_FAST) {
+    pipeline_flags = VA_PROC_PIPELINE_FAST;
+  }
+
   self->scale_method = method;
+  self->pipeline_flags = pipeline_flags;
   GST_OBJECT_UNLOCK (self);
 
   return TRUE;
@@ -1686,6 +1693,7 @@ _create_pipeline_buffer (GstVaFilter * self, GstVaSample * src,
     .input_color_properties = self->input_color_properties,
     .output_color_properties = self->output_color_properties,
     .filter_flags = self->scale_method | self->interpolation_method,
+    .pipeline_flags = self->pipeline_flags,
     /* output to SDR */
     .output_hdr_metadata = NULL,
   };
@@ -1876,6 +1884,7 @@ gst_va_filter_compose (GstVaFilter * self, GstVaComposeTransaction * tx)
       .surface_region = &sample->input_region,
       .output_region = &sample->output_region,
       .filter_flags = self->scale_method | self->interpolation_method,
+      .pipeline_flags = self->pipeline_flags,
     };
     /* *INDENT-ON* */
     GST_OBJECT_UNLOCK (self);
