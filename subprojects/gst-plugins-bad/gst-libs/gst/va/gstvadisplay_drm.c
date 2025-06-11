@@ -57,6 +57,7 @@ struct _GstVaDisplayDrm
   /* <private> */
   gchar *path;
   gint fd;
+  gboolean is_i915;
 };
 
 /**
@@ -155,6 +156,11 @@ gst_va_display_drm_create_va_display (GstVaDisplay * display)
     }
     GST_INFO_OBJECT (self, "DRM render node with kernel driver %s",
         version->name);
+    if (strncmp (version->name, "i915", 4) == 0) {
+      self->is_i915 = TRUE;
+    } else {
+      self->is_i915 = FALSE;
+    }
     drmFreeVersion (version);
   }
 #endif
@@ -187,6 +193,14 @@ static void
 gst_va_display_drm_init (GstVaDisplayDrm * self)
 {
   self->fd = -1;
+}
+
+gboolean
+gst_va_display_drm_check_i915 (GstVaDisplay * display)
+{
+  GstVaDisplayDrm *self = GST_VA_DISPLAY_DRM (display);
+
+  return self->is_i915;
 }
 
 /**
