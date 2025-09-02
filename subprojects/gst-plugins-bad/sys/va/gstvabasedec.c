@@ -48,10 +48,32 @@ gst_va_base_dec_get_property (GObject * object, guint prop_id,
 
       break;
     }
+    case GST_VA_DEC_PROP_TLV_VADPY:{
+      g_value_set_uint (value, self->tlv_vadpy);
+      break;
+    }
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
   }
 }
+
+#ifndef G_OS_WIN32
+static void
+gst_va_base_dec_set_property (GObject * object, guint prop_id,
+    const GValue * value, GParamSpec * pspec)
+{
+  GstVaBaseDec *self = GST_VA_BASE_DEC (object);
+
+  switch (prop_id) {
+    case GST_VA_DEC_PROP_TLV_VADPY:{
+      self->tlv_vadpy = g_value_get_uint(value);
+      break;
+    }
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+  }
+}
+#endif
 
 static gboolean
 gst_va_base_dec_open (GstVideoDecoder * decoder)
@@ -81,6 +103,12 @@ gst_va_base_dec_open (GstVideoDecoder * decoder)
   }
 
   base->apply_video_crop = FALSE;
+
+#ifndef G_OS_WIN32
+  if (base->display) {
+    gst_va_set_tlv_vadpy(base->display, base->tlv_vadpy);
+  }
+#endif
 
   return ret;
 }
@@ -752,6 +780,10 @@ gst_va_base_dec_class_init (GstVaBaseDecClass * klass, GstVaCodecs codec,
 
   object_class->get_property = gst_va_base_dec_get_property;
 
+#ifndef G_OS_WIN32
+  object_class->set_property = gst_va_base_dec_set_property;
+#endif
+
   element_class->set_context = GST_DEBUG_FUNCPTR (gst_va_base_dec_set_context);
 
   decoder_class->open = GST_DEBUG_FUNCPTR (gst_va_base_dec_open);
@@ -768,6 +800,12 @@ gst_va_base_dec_class_init (GstVaBaseDecClass * klass, GstVaCodecs codec,
       g_param_spec_string ("device-path", "Device Path",
           GST_VA_DEVICE_PATH_PROP_DESC, NULL, GST_PARAM_DOC_SHOW_DEFAULT |
           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+#ifndef G_OS_WIN32
+  g_object_class_install_property (object_class, GST_VA_DEC_PROP_TLV_VADPY,
+      g_param_spec_uint ("tlv-vadpy", "TLV VADPY",
+          "Threshold limit value for VADPY (0: disabled)", 0, 8, 0,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
+#endif
 }
 
 static inline GstVideoFormat

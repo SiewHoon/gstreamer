@@ -53,5 +53,9 @@ gboolean              gst_context_get_va_display          (GstContext * context,
 GST_VA_API
 void                  gst_context_set_va_display          (GstContext * context,
                                                            GstVaDisplay * display);
+#ifndef G_OS_WIN32
+GST_VA_API
+void                  gst_va_set_tlv_vadpy                (GstVaDisplay * display, guint tlv_vadpy);
+#endif
 
 G_END_DECLS

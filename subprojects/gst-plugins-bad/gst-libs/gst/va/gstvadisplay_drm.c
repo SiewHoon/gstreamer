@@ -58,6 +58,7 @@ struct _GstVaDisplayDrm
   gchar *path;
   gint fd;
   gboolean is_i915;
+  guint tlv_vadpy;
 };
 
 /**
@@ -193,6 +194,7 @@ static void
 gst_va_display_drm_init (GstVaDisplayDrm * self)
 {
   self->fd = -1;
+  self->tlv_vadpy = 0;
 }
 
 gboolean
@@ -203,6 +205,27 @@ gst_va_display_drm_check_i915 (GstVaDisplay * display)
   return self->is_i915;
 }
 
+void
+gst_va_display_drm_set_tlv_vadpy (GstVaDisplay * display, guint tlv_vadpy)
+{
+  GstVaDisplayDrm *self = GST_VA_DISPLAY_DRM (display);
+  self->tlv_vadpy = tlv_vadpy;
+}
+
+gboolean gst_va_display_drm_enable_tlv_vadpy (GstVaDisplay * display)
+{
+  GstVaDisplayDrm *self = GST_VA_DISPLAY_DRM (display);
+  if (self->tlv_vadpy == 0)
+    return FALSE;
+  else
+    return TRUE;
+}
+
+guint gst_va_display_drm_get_tlv_vadpy (GstVaDisplay * display)
+{
+  GstVaDisplayDrm *self = GST_VA_DISPLAY_DRM (display);
+  return self->tlv_vadpy;
+}
 /**
  * gst_va_display_drm_new_from_path:
  * @path: the path to the DRM device

@@ -316,15 +316,18 @@ gst_va_handle_set_context (GstElement * element, GstContext * context,
 
   if (display_replacement) {
 #ifdef HAVE_LIBDRM
-    if (!gst_va_display_drm_check_i915(display_replacement)) {
+    if (gst_va_display_drm_enable_tlv_vadpy(display_replacement)) {
       if (gst_va_display_is_implementation (display_replacement,
           GST_VA_IMPLEMENTATION_INTEL_IHD) && !from_neighbor) {
           guint ref;
+	  guint tlv_vadpy;
+
+	  tlv_vadpy = gst_va_display_drm_get_tlv_vadpy(display_replacement);
 
           ref = g_atomic_int_get (&((GObject *) display_replacement)->ref_count);
-          if (ref > 4) {
+          if (ref > tlv_vadpy) {
             gst_object_unref (display_replacement);
-          return FALSE;
+            return FALSE;
           }
       }
     }
@@ -505,3 +508,13 @@ gst_context_set_va_display (GstContext * context, GstVaDisplay * display)
     }
   }
 }
+
+#ifndef G_OS_WIN32
+void
+gst_va_set_tlv_vadpy (GstVaDisplay * display, guint tlv_vadpy)
+{
+  g_return_if_fail (display != NULL);
+
+  gst_va_display_drm_set_tlv_vadpy(display, tlv_vadpy);
+}
+#endif

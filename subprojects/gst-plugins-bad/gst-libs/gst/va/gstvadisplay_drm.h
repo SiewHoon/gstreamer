@@ -40,5 +40,12 @@ GST_VA_API
 GstVaDisplay *        gst_va_display_drm_new_from_path    (const gchar * path);
 GST_VA_API
 gboolean              gst_va_display_drm_check_i915       (GstVaDisplay * display);
+GST_VA_API
+void                  gst_va_display_drm_set_tlv_vadpy    (GstVaDisplay * display, guint tlv_vadpy);
+GST_VA_API
+gboolean              gst_va_display_drm_enable_tlv_vadpy (GstVaDisplay * display);
+GST_VA_API
+guint                 gst_va_display_drm_get_tlv_vadpy    (GstVaDisplay * display);
+
 
 G_END_DECLS

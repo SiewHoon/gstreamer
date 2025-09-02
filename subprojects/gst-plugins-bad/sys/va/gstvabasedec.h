@@ -43,6 +43,9 @@ G_BEGIN_DECLS
 
 enum {
   GST_VA_DEC_PROP_DEVICE_PATH = 1,
+#ifndef G_OS_WIN32
+  GST_VA_DEC_PROP_TLV_VADPY,
+#endif
   GST_VA_DEC_PROP_LAST,
 };
 
@@ -93,6 +96,9 @@ struct _GstVaBaseDec
   gboolean need_negotiation;
 
   guint32 hacks;
+#ifndef G_OS_WIN32
+  guint tlv_vadpy;
+#endif
 };
 
 struct _GstVaBaseDecClass
