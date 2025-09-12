@@ -99,3 +99,11 @@ gst_va_create_other_pool (GstAllocator * allocator,
 
   return pool;
 }
+
+#ifndef G_OS_WIN32
+gboolean
+gst_va_display_check_i915 (GstVaDisplay * display)
+{
+  return gst_va_display_drm_check_i915(display);
+}
+#endif

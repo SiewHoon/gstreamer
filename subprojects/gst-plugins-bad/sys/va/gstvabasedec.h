@@ -117,6 +117,7 @@ struct _GstVaBaseDecClass
 
   GstVaCodecs codec;
   gchar *render_device_path;
+  gboolean is_i915;
   /* The parent class in GType hierarchy */
   GstObjectClass *parent_decoder_class;
 };

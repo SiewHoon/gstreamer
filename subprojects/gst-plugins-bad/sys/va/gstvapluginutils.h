@@ -50,4 +50,8 @@ GstBufferPool * gst_va_create_other_pool (GstAllocator * allocator,
                                           GstCaps * caps,
                                           guint size);
 
+#ifndef G_OS_WIN32
+gboolean gst_va_display_check_i915 (GstVaDisplay * display);
+#endif
+
 G_END_DECLS

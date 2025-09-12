@@ -105,9 +105,10 @@ gst_va_base_dec_open (GstVideoDecoder * decoder)
   base->apply_video_crop = FALSE;
 
 #ifndef G_OS_WIN32
-  if (base->display) {
-    gst_va_set_tlv_vadpy(base->display, base->tlv_vadpy);
-  }
+  if (!klass->is_i915)
+   if (base->display) {
+     gst_va_set_tlv_vadpy(base->display, base->tlv_vadpy);
+   }
 #endif
 
   return ret;
@@ -760,6 +761,15 @@ gst_va_base_dec_class_init (GstVaBaseDecClass * klass, GstVaCodecs codec,
   klass->codec = codec;
   klass->render_device_path = g_strdup (render_device_path);
 
+#ifndef G_OS_WIN32
+  GstVaDisplay *display = NULL;
+  display = gst_va_display_platform_new(klass->render_device_path);
+  if (display) {
+    klass->is_i915 = gst_va_display_check_i915(display);
+    g_object_unref(display);
+  }
+#endif
+
   sink_pad_templ = gst_pad_template_new ("sink", GST_PAD_SINK, GST_PAD_ALWAYS,
       sink_caps);
   gst_element_class_add_pad_template (element_class, sink_pad_templ);
@@ -781,7 +791,8 @@ gst_va_base_dec_class_init (GstVaBaseDecClass * klass, GstVaCodecs codec,
   object_class->get_property = gst_va_base_dec_get_property;
 
 #ifndef G_OS_WIN32
-  object_class->set_property = gst_va_base_dec_set_property;
+  if (!klass->is_i915)
+    object_class->set_property = gst_va_base_dec_set_property;
 #endif
 
   element_class->set_context = GST_DEBUG_FUNCPTR (gst_va_base_dec_set_context);
@@ -800,11 +811,14 @@ gst_va_base_dec_class_init (GstVaBaseDecClass * klass, GstVaCodecs codec,
       g_param_spec_string ("device-path", "Device Path",
           GST_VA_DEVICE_PATH_PROP_DESC, NULL, GST_PARAM_DOC_SHOW_DEFAULT |
           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
 #ifndef G_OS_WIN32
-  g_object_class_install_property (object_class, GST_VA_DEC_PROP_TLV_VADPY,
-      g_param_spec_uint ("tlv-vadpy", "TLV VADPY",
-          "Threshold limit value for VADPY (0: disabled)", 0, 8, 0,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
+  if (!klass->is_i915) {
+    g_object_class_install_property (object_class, GST_VA_DEC_PROP_TLV_VADPY,
+        g_param_spec_uint ("tlv-vadpy", "TLV VADPY",
+            "Threshold limit value for VADPY (0: disabled)", 0, 8, 0,
+            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
+  }
 #endif
 }
 
