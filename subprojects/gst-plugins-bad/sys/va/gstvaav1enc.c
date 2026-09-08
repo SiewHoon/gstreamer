@@ -1880,6 +1880,10 @@ _av1_get_rtformat (GstVaAV1Enc * self, GstVideoFormat format,
       *depth = 8;
       *chrome = 1;
       break;
+    case VA_RT_FORMAT_YUV422:
+      *depth = 8;
+      *chrome = 2;
+      break;
     case VA_RT_FORMAT_YUV420_10:
       *depth = 10;
       *chrome = 1;
@@ -1968,12 +1972,14 @@ _av1_decide_profile (GstVaAV1Enc * self, guint rt_format,
      2            8 or 10    Yes                 YUV 4:2:2
      2            12         Yes                 YUV 4:2:0,YUV 4:2:2,YUV 4:4:4
    */
-  /* We only support 0 and 1 profile now */
+  /* We only support 0, 1 and 2 profile now */
   /* note that profile 2 doesn't support screen content coding (SCC) */
   if (chrome == 0 || chrome == 1) {
     va_profile = VAProfileAV1Profile0;
   } else if (chrome == 3) {
     va_profile = VAProfileAV1Profile1;
+  } else if (chrome == 2) {
+    va_profile = VAProfileAV1Profile2;
   } else {
     va_profile = VAProfileNone;
     GST_ERROR_OBJECT (self, "No suitable profile for chroma value %d", chrome);
@@ -2500,6 +2506,9 @@ _av1_calculate_coded_size (GstVaAV1Enc * self)
     case VAProfileAV1Profile1:
       pic_size_profile_factor = 30;
       break;
+    case VAProfileAV1Profile2:
+      pic_size_profile_factor = 36;
+      break;
     default:
       pic_size_profile_factor = 36;
       break;
@@ -2933,6 +2942,8 @@ _av1_fill_sequence_param (GstVaAV1Enc * self,
     seq_profile = 0;
   } else if (base->profile == VAProfileAV1Profile1) {
     seq_profile = 1;
+  } else if (base->profile == VAProfileAV1Profile2) {
+    seq_profile = 2;
   } else {
     GST_ERROR_OBJECT (self, "VA profile %d not supported", base->profile);
     g_assert_not_reached ();
