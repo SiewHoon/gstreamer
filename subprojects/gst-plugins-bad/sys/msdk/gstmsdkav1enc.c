@@ -134,6 +134,8 @@ gst_msdkav1enc_set_format (GstMsdkEnc * encoder)
     if (profile) {
       if (!g_strcmp0 (profile, "main"))
         thiz->profile = MFX_PROFILE_AV1_MAIN;
+      else if (!g_strcmp0 (profile, "pro"))
+        thiz->profile = MFX_PROFILE_AV1_PRO;
       else
         g_assert_not_reached ();
     }
@@ -158,6 +160,10 @@ gst_msdkav1enc_configure (GstMsdkEnc * encoder)
     case MFX_FOURCC_NV12:
     case MFX_FOURCC_P010:
       encoder->param.mfx.CodecProfile = MFX_PROFILE_AV1_MAIN;
+      break;
+    case MFX_FOURCC_YUY2:
+    case MFX_FOURCC_Y210:
+      encoder->param.mfx.CodecProfile = MFX_PROFILE_AV1_PRO;
       break;
 
     default:
@@ -236,6 +242,8 @@ profile_to_string (gint profile)
   switch (profile) {
     case MFX_PROFILE_AV1_MAIN:
       return "main";
+    case MFX_PROFILE_AV1_PRO:
+      return "pro";
     default:
       break;
   }
