@@ -1348,7 +1348,7 @@ _install_static_properties (GObjectClass * klass)
 static void
 gst_va_vpp_class_init (gpointer g_class, gpointer class_data)
 {
-  GstCaps *doc_caps, *caps = NULL;
+  GstCaps *doc_caps, *sink_caps = NULL, *src_caps = NULL;
   GstPadTemplate *sink_pad_templ, *src_pad_templ;
   GObjectClass *object_class = G_OBJECT_CLASS (g_class);
   GstBaseTransformClass *trans_class = GST_BASE_TRANSFORM_CLASS (g_class);
@@ -1377,7 +1377,8 @@ gst_va_vpp_class_init (gpointer g_class, gpointer class_data)
   filter = gst_va_filter_new (display);
 
   if (gst_va_filter_open (filter)) {
-    caps = gst_va_filter_get_caps (filter);
+    sink_caps = gst_va_filter_get_caps (filter, GST_PAD_SINK);
+    src_caps = gst_va_filter_get_caps (filter, GST_PAD_SRC);
 
     /* add converter klass */
     {
@@ -1395,7 +1396,8 @@ gst_va_vpp_class_init (gpointer g_class, gpointer class_data)
       }
     }
   } else {
-    caps = gst_caps_from_string (caps_str);
+    sink_caps = gst_caps_from_string (caps_str);
+    src_caps = gst_caps_ref (sink_caps);
   }
 
   gst_element_class_set_metadata (element_class, long_name, klass->str,
@@ -1407,19 +1409,20 @@ gst_va_vpp_class_init (gpointer g_class, gpointer class_data)
   doc_caps = gst_caps_from_string (caps_str);
 
   sink_pad_templ = gst_pad_template_new ("sink", GST_PAD_SINK, GST_PAD_ALWAYS,
-      caps);
+      sink_caps);
   gst_element_class_add_pad_template (element_class, sink_pad_templ);
   gst_pad_template_set_documentation_caps (sink_pad_templ,
       gst_caps_ref (doc_caps));
 
   src_pad_templ = gst_pad_template_new ("src", GST_PAD_SRC, GST_PAD_ALWAYS,
-      caps);
+      src_caps);
   gst_element_class_add_pad_template (element_class, src_pad_templ);
   gst_pad_template_set_documentation_caps (src_pad_templ,
       gst_caps_ref (doc_caps));
   gst_caps_unref (doc_caps);
 
-  gst_caps_unref (caps);
+  gst_caps_unref (sink_caps);
+  gst_caps_unref (src_caps);
 
   object_class->dispose = gst_va_vpp_dispose;
   object_class->set_property = gst_va_vpp_set_property;
