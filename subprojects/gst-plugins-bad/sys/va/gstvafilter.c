@@ -1852,12 +1852,6 @@ gst_va_filter_compose (GstVaFilter * self, GstVaComposeTransaction * tx)
 
   dpy = gst_va_display_get_va_dpy (self->display);
 
-  status = vaBeginPicture (dpy, self->context, out_surface);
-  if (status != VA_STATUS_SUCCESS) {
-    GST_ERROR_OBJECT (self, "vaBeginPicture: %s", vaErrorStr (status));
-    return FALSE;
-  }
-
   sample = tx->next (tx->user_data);
   for (; sample; sample = tx->next (tx->user_data)) {
     VAProcPipelineParameterBuffer params = { 0, };
@@ -1881,7 +1875,6 @@ gst_va_filter_compose (GstVaFilter * self, GstVaComposeTransaction * tx)
       .surface = in_surface,
       .surface_region = &sample->input_region,
       .output_region = &sample->output_region,
-      .output_background_color = self->background_color,
       .filter_flags = self->scale_method | self->interpolation_method,
     };
     /* *INDENT-ON* */
@@ -1901,6 +1894,12 @@ gst_va_filter_compose (GstVaFilter * self, GstVaComposeTransaction * tx)
     /* Ensure we do a blend operation and not a copy blit */
     params.blend_state = &blend;
 
+    status = vaBeginPicture (dpy, self->context, out_surface);
+    if (status != VA_STATUS_SUCCESS) {
+      GST_ERROR_OBJECT (self, "vaCreateBuffer: %s", vaErrorStr (status));
+      return FALSE;
+    }
+
     status = vaCreateBuffer (dpy, self->context,
         VAProcPipelineParameterBufferType, sizeof (params), 1, &params,
         &buffer);
@@ -1915,12 +1914,12 @@ gst_va_filter_compose (GstVaFilter * self, GstVaComposeTransaction * tx)
       GST_ERROR_OBJECT (self, "vaRenderPicture: %s", vaErrorStr (status));
       goto fail_end_pic;
     }
-  }
 
-  status = vaEndPicture (dpy, self->context);
-  if (status != VA_STATUS_SUCCESS) {
-    GST_ERROR_OBJECT (self, "vaEndPicture: %s", vaErrorStr (status));
-    return FALSE;
+    status = vaEndPicture (dpy, self->context);
+    if (status != VA_STATUS_SUCCESS) {
+      GST_ERROR_OBJECT (self, "vaEndPicture: %s", vaErrorStr (status));
+      return FALSE;
+    }
   }
 
   return TRUE;
