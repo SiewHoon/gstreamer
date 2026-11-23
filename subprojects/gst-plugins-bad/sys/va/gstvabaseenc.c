@@ -486,78 +486,15 @@ out:
   return ret_sz;
 }
 
-static GstAllocator *
-_allocator_from_caps (GstVaBaseEnc * base, GstCaps * caps)
-{
-  GstAllocator *allocator = NULL;
-
-  if (gst_video_is_dma_drm_caps (caps)) {
-    allocator = gst_va_dmabuf_allocator_new (base->display);
-  } else {
-    GArray *surface_formats =
-        gst_va_encoder_get_surface_formats (base->encoder);
-    allocator = gst_va_allocator_new (base->display, surface_formats);
-  }
-
-  return allocator;
-}
-
 static gboolean
 gst_va_base_enc_propose_allocation (GstVideoEncoder * venc, GstQuery * query)
 {
   GstVaBaseEnc *base = GST_VA_BASE_ENC (venc);
-  GstAllocator *allocator = NULL;
-  GstAllocationParams params = { 0, };
-  GstBufferPool *pool;
-  GstCaps *caps;
-  gboolean need_pool = FALSE;
-  guint size = 0, usage_hint;
-  guint min_buffers = base->min_buffers;
 
-  gst_query_parse_allocation (query, &caps, &need_pool);
-  if (!caps)
-    return FALSE;
-
-  usage_hint = va_get_surface_usage_hint (VAEntrypointEncSlice, GST_PAD_SINK);
-
-  gst_allocation_params_init (&params);
-
-  if (!(allocator = _allocator_from_caps (base, caps)))
-    return FALSE;
-
-  /* Testing showed that we need at least 3 buffers for good performance */
-  min_buffers = MAX (min_buffers, 3);
-
-  pool = gst_va_pool_new_with_config (caps, min_buffers, 0, usage_hint,
-      GST_VA_FEATURE_AUTO, allocator, &params);
-  if (!pool) {
-    gst_object_unref (allocator);
-    goto config_failed;
-  }
-
-  if (!gst_va_pool_get_buffer_size (pool, &size))
-    goto config_failed;
-
-  gst_query_add_allocation_param (query, allocator, &params);
-  gst_query_add_allocation_pool (query, pool, size, min_buffers, 0);
-
-  GST_DEBUG_OBJECT (base,
-      "proposing %" GST_PTR_FORMAT " with allocator %" GST_PTR_FORMAT,
-      pool, allocator);
-
-  gst_object_unref (allocator);
-  gst_object_unref (pool);
-
-  gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL);
-
-  return TRUE;
-
-  /* ERRORS */
-config_failed:
-  {
-    GST_ERROR_OBJECT (base, "failed to set config");
-    return FALSE;
-  }
+  return gst_va_base_propose_allocation (GST_ELEMENT (base), GST_CAT_DEFAULT,
+      base->display, GST_VA_BASE_ENC_ENTRYPOINT (base),
+      gst_va_encoder_get_surface_formats (base->encoder), base->min_buffers,
+      query);
 }
 
 static GstFlowReturn
